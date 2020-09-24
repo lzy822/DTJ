@@ -429,7 +429,7 @@ final class MyPicViewer extends ToolBarStatusFrame {
         addWindowListener(new WindowListener() {
             @Override
             public void windowOpened(WindowEvent e) {
-
+                //
             }
 
             @Override
