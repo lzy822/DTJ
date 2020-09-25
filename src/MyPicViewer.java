@@ -347,20 +347,17 @@ final class MyPicViewer extends ToolBarStatusFrame {
         int size = currentMaps.size();
         if (size == 1 && !currentMaps.get(0).getPath().isEmpty()) {
             main_frame.setEnabled(false);
-            new MyPicViewer(currentMaps.get(0).getPath(), main_frame);
+            new MyPicViewer(currentMaps.get(0).getPath(), main_frame, currentMaps.get(0).getName());
         }
         else if (size == 0) {
 
         }
         else {
+            int currentMapType = currentMaps.get(0).getMapType();
             main_frame.getContentPane().removeAll();
             Dimension scrSize = Toolkit.getDefaultToolkit().getScreenSize();
             main_frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            main_frame.setTitle("临沧市地图集");
             main_frame.setLayout(new FlowLayout());
-            int currentHeight = (size + 1) * 50 + 80;
-            main_frame.setSize(260, currentHeight);
-            main_frame.setLocation(scrSize.width / 2 - 130, scrSize.height / 2 - currentHeight / 2);
             for (int i = 0; i < size; i++) {
                 final String btName = currentMaps.get(i).getName();
                 JButton now = new JButton(btName);
@@ -374,18 +371,26 @@ final class MyPicViewer extends ToolBarStatusFrame {
                 };
                 now.addActionListener(listener);
             }
-            JButton now = new JButton("返回");
-            now.setPreferredSize(new Dimension(200, 50));
-            main_frame.add(now);
-            ActionListener listener = new ActionListener() {
-                public void actionPerformed(ActionEvent event) {
-                    List<Map> newMaps = FindParentMapList(maps, currentMaps.get(0).getParentNode());
-                    System.out.println(newMaps.size() + ", " + currentMaps.get(0).getParentNode());
-                    main_frame.getContentPane().removeAll();
-                    LoadNextMapType(main_frame, maps, newMaps);
-                }
-            };
-            now.addActionListener(listener);
+            int currentHeight = size * 50 + 80;
+            main_frame.setTitle("临沧市地图集");
+            if (currentMapType > 0) {
+                main_frame.setTitle(currentMaps.get(0).getParentNode());
+                currentHeight = currentHeight + 50;
+                JButton now = new JButton("返回");
+                now.setPreferredSize(new Dimension(200, 50));
+                main_frame.add(now);
+                ActionListener listener = new ActionListener() {
+                    public void actionPerformed(ActionEvent event) {
+                        List<Map> newMaps = FindParentMapList(maps, currentMaps.get(0).getParentNode());
+                        System.out.println(newMaps.size() + ", " + currentMaps.get(0).getParentNode());
+                        main_frame.getContentPane().removeAll();
+                        LoadNextMapType(main_frame, maps, newMaps);
+                    }
+                };
+                now.addActionListener(listener);
+            }
+            main_frame.setSize(260, currentHeight);
+            main_frame.setLocation(scrSize.width / 2 - 130, scrSize.height / 2 - currentHeight / 2);
             main_frame.repaint();
             main_frame.setVisible(true);
         }
@@ -417,8 +422,8 @@ final class MyPicViewer extends ToolBarStatusFrame {
         return newMaps;
     }
 
-    public MyPicViewer(String path, JFrame frame) {
-        setTitle("图片查看器");
+    public MyPicViewer(String path, JFrame frame, String name) {
+        setTitle(name);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
         createToolBarButtons();
