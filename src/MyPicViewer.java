@@ -258,7 +258,7 @@ final class MyPicViewer extends ToolBarStatusFrame {
 
     public static void main(String [] args) {
         final List<Map> mapList = new ArrayList<>();
-        mapList.add(new Map("", "序图组", 0, ""));
+        /*mapList.add(new Map("", "序图组", 0, ""));
         mapList.add(new Map("", "资源与环境图组", 0, ""));
         mapList.add(new Map("", "社会经济图组", 0, ""));
         mapList.add(new Map("", "区域地理图组", 0, ""));
@@ -270,13 +270,33 @@ final class MyPicViewer extends ToolBarStatusFrame {
         mapList.add(new Map("区域地理图组", "各县城区图", 4, ""));
         mapList.add(new Map("区域地理图组", "各县影像图", 4, ""));
         mapList.add(new Map("区域地理图组", "乡镇图", 4, ""));
-        mapList.add(new Map("世界地图", "test", 5, "D:\\\\test.png"));
+        mapList.add(new Map("世界地图", "test", 5, "D:\\\\test.png"));*/
+        try {
+            File filename = new File("C:\\Users\\54286\\Desktop\\临沧市地图集" + "\\data.txt"); // 要读取以上路径的input。txt文件
+            InputStreamReader reader = new InputStreamReader(
+                    new FileInputStream(filename)); // 建立一个输入流对象reader
+            BufferedReader br = new BufferedReader(reader); // 建立一个对象，它把文件内容转成计算机能读懂的语言
+            String line = "";
+            line = br.readLine();
+            while (line != null) {
+                System.out.println(line);
+                String[] strings = line.split(",");
+                mapList.add(new Map(strings[0], strings[1], Integer.parseInt(strings[2]), strings[3]));
+                line = br.readLine(); // 一次读入一行数据
+            }
+        }
+        catch (Exception e){
+            System.out.println(e.toString());
+        }
         System.out.println(mapList.size());
         String [] nameStd = {"序图组","资源与环境图组","社会经济图组","区域地理图组"};
         Dimension scrSize=Toolkit.getDefaultToolkit().getScreenSize();
         System.out.println(scrSize.getWidth() + ", " + scrSize.getHeight());
+        JFrame BaseFrame = new JFrame();
+        BaseFrame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         JFrame main_frame = new JFrame();
-        LoadNextMapType(main_frame, mapList, FindNextMapList(mapList, ""));
+        main_frame.setAlwaysOnTop(true);
+        LoadNextMapType(main_frame, mapList, FindNextMapList(mapList, ""), BaseFrame);
         //new MyPicViewer("D:\\test.png");
     }
 
@@ -343,8 +363,9 @@ final class MyPicViewer extends ToolBarStatusFrame {
         main_frame.setVisible(true);
     }
 
-    static private void LoadNextMapType(JFrame main_frame, List<Map> maps, List<Map> currentMaps){
+    static private void LoadNextMapTypeOneWindow(JFrame main_frame, List<Map> maps, List<Map> currentMaps){
         int size = currentMaps.size();
+        System.out.println(currentMaps.get(0).getPath());
         if (size == 1 && !currentMaps.get(0).getPath().isEmpty()) {
             main_frame.setEnabled(false);
             new MyPicViewer(currentMaps.get(0).getPath(), main_frame, currentMaps.get(0).getName());
@@ -353,45 +374,147 @@ final class MyPicViewer extends ToolBarStatusFrame {
 
         }
         else {
+            JPanel jPanel = new JPanel();
             int currentMapType = currentMaps.get(0).getMapType();
             main_frame.getContentPane().removeAll();
             Dimension scrSize = Toolkit.getDefaultToolkit().getScreenSize();
             main_frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            main_frame.setLayout(new FlowLayout());
+            main_frame.setLayout(new FlowLayout(FlowLayout.CENTER));
+            //main_frame.setLayout(new BorderLayout());
+
+            // 将同层级的地图添加到JPanel中
             for (int i = 0; i < size; i++) {
                 final String btName = currentMaps.get(i).getName();
                 JButton now = new JButton(btName);
                 now.setPreferredSize(new Dimension(200, 50));
-                main_frame.add(now);
+                //main_frame.add(now);
+                jPanel.add(now);
                 ActionListener listener = new ActionListener() {
                     public void actionPerformed(ActionEvent event) {
                         List<Map> newMaps = FindNextMapList(maps, btName);
-                        LoadNextMapType(main_frame, maps, newMaps);
+                        LoadNextMapTypeOneWindow(main_frame, maps, newMaps);
                     }
                 };
                 now.addActionListener(listener);
             }
-            int currentHeight = size * 50 + 80;
+
+            // 在除了主索引层外的其他层中添加返回按钮
+            int currentHeight = size * 50 + 25;
             main_frame.setTitle("临沧市地图集");
             if (currentMapType > 0) {
                 main_frame.setTitle(currentMaps.get(0).getParentNode());
                 currentHeight = currentHeight + 50;
                 JButton now = new JButton("返回");
                 now.setPreferredSize(new Dimension(200, 50));
-                main_frame.add(now);
+                //main_frame.add(now);
+                jPanel.add(now);
                 ActionListener listener = new ActionListener() {
                     public void actionPerformed(ActionEvent event) {
                         List<Map> newMaps = FindParentMapList(maps, currentMaps.get(0).getParentNode());
                         System.out.println(newMaps.size() + ", " + currentMaps.get(0).getParentNode());
                         main_frame.getContentPane().removeAll();
-                        LoadNextMapType(main_frame, maps, newMaps);
+                        LoadNextMapTypeOneWindow(main_frame, maps, newMaps);
                     }
                 };
                 now.addActionListener(listener);
             }
-            main_frame.setSize(260, currentHeight);
+            jPanel.setPreferredSize(new Dimension(260, currentHeight));
+            jPanel.setLocation(scrSize.width / 2 - 130, scrSize.height / 2 - currentHeight / 2);
+            jPanel.setBackground(Color.GRAY);
+            //jPanel.setBounds(scrSize.width / 2 - 130, scrSize.height / 2 - currentHeight / 2, 260 , currentHeight);
+            //main_frame.add(jPanel, BorderLayout.CENTER);
+            JPanel HoldPositionPanel = new JPanel();
+            HoldPositionPanel.setPreferredSize(new Dimension(260, (scrSize.height - currentHeight)/2-30));
+            JPanel CenterPanel = new JPanel();
+            CenterPanel.setPreferredSize(new Dimension(260, scrSize.height));
+            CenterPanel.add(HoldPositionPanel);
+            CenterPanel.add(jPanel);
+            /*main_frame.add(jPanel1);
+            main_frame.add(jPanel);*/
+            main_frame.add(CenterPanel);
+            //main_frame.setSize(260, currentHeight);
+            //main_frame.setSize(800, 600);
+            main_frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+            //jPanel.setPreferredSize(new Dimension());
+            //main_frame.setLocation(scrSize.width / 2 - 130, scrSize.height / 2 - currentHeight / 2);
+            main_frame.repaint();
+            main_frame.setVisible(true);
+        }
+    }
+
+    static private void LoadNextMapType(JFrame main_frame, List<Map> maps, List<Map> currentMaps, JFrame BaseFrame){
+        int size = currentMaps.size();
+        System.out.println(size);
+        if (size == 1 && !currentMaps.get(0).getPath().isEmpty()) {
+            main_frame.setEnabled(false);
+            main_frame.setAlwaysOnTop(false);
+            new MyPicViewer(currentMaps.get(0).getPath(), main_frame, currentMaps.get(0).getName());
+        }
+        else if (size == 0) {
+
+        }
+        else {
+            JPanel jPanel = new JPanel();
+            int currentMapType = currentMaps.get(0).getMapType();
+            main_frame.getContentPane().removeAll();
+            Dimension scrSize = Toolkit.getDefaultToolkit().getScreenSize();
+            main_frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            main_frame.setLayout(new FlowLayout(FlowLayout.CENTER));
+            //main_frame.setLayout(new BorderLayout());
+
+            // 将同层级的地图添加到JPanel中
+            for (int i = 0; i < size; i++) {
+                final String btName = currentMaps.get(i).getName();
+                JButton now = new JButton(btName);
+                now.setPreferredSize(new Dimension(200, 50));
+                //main_frame.add(now);
+                jPanel.add(now);
+                final String path = currentMaps.get(i).getPath();
+                ActionListener listener = new ActionListener() {
+                    public void actionPerformed(ActionEvent event) {
+                        if (path.trim().length()!=0)
+                        {
+                            main_frame.setEnabled(false);
+                            main_frame.setAlwaysOnTop(false);
+                            new MyPicViewer(currentMaps.get(0).getPath(), main_frame, currentMaps.get(0).getName());
+                        }
+                        else {
+                            List<Map> newMaps = FindNextMapList(maps, btName);
+                            LoadNextMapType(main_frame, maps, newMaps, BaseFrame);
+                        }
+                    }
+                };
+                now.addActionListener(listener);
+            }
+
+            // 在除了主索引层外的其他层中添加返回按钮
+            int currentHeight = size * 50 + size * 6;
+            main_frame.setTitle("临沧市地图集");
+            if (currentMapType > 0) {
+                main_frame.setTitle(currentMaps.get(0).getParentNode());
+                currentHeight = currentHeight + 50;
+                JButton now = new JButton("返回");
+                now.setPreferredSize(new Dimension(200, 50));
+                //main_frame.add(now);
+                jPanel.add(now);
+                ActionListener listener = new ActionListener() {
+                    public void actionPerformed(ActionEvent event) {
+                        List<Map> newMaps = FindParentMapList(maps, currentMaps.get(0).getParentNode());
+                        System.out.println(newMaps.size() + ", " + currentMaps.get(0).getParentNode());
+                        main_frame.getContentPane().removeAll();
+                        LoadNextMapType(main_frame, maps, newMaps, BaseFrame);
+                    }
+                };
+                now.addActionListener(listener);
+            }
+            jPanel.setPreferredSize(new Dimension(260, currentHeight));
+            //jPanel.setLocation(scrSize.width / 2 - 130, scrSize.height / 2 - currentHeight / 2);
+            main_frame.add(jPanel);
+            System.out.println(jPanel.getPreferredSize().getHeight());
+            main_frame.setSize(260, (int)jPanel.getPreferredSize().getHeight() + 50);
             main_frame.setLocation(scrSize.width / 2 - 130, scrSize.height / 2 - currentHeight / 2);
             main_frame.repaint();
+            BaseFrame.setVisible(true);
             main_frame.setVisible(true);
         }
     }
@@ -444,6 +567,7 @@ final class MyPicViewer extends ToolBarStatusFrame {
 
             @Override
             public void windowClosed(WindowEvent e) {
+                frame.setAlwaysOnTop(true);
                 frame.setEnabled(true);
                 frame.setVisible(true);
             }
@@ -472,6 +596,12 @@ final class MyPicViewer extends ToolBarStatusFrame {
         showCurrentPicture(path);
         Image image = Toolkit.getDefaultToolkit().getImage(path);
         setSize(image.getWidth(null), image.getHeight(null));
+
+        Dimension scrSize = Toolkit.getDefaultToolkit().getScreenSize();
+        if((scrSize.height / 2 - image.getHeight(null) / 2) < 0)
+            setLocation(scrSize.width / 2 - image.getWidth(null)/2, 0);
+        else
+            setLocation(scrSize.width / 2 - image.getWidth(null)/2, scrSize.height / 2 - image.getHeight(null) / 2);
 
         setVisible(true);
 

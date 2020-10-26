@@ -29,6 +29,7 @@ import org.apache.pdfbox.pdmodel.graphics.image.PDImage;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotation;
 import org.apache.pdfbox.pdmodel.interactive.form.PDFieldTree;
 import org.apache.pdfbox.pdmodel.interactive.measurement.PDMeasureDictionary;
+import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.pdfbox.tools.PDFBox;
@@ -41,7 +42,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -74,22 +77,53 @@ public class CustomGraphicsStreamEngine extends PDFGraphicsStreamEngine
 
     public static void main(String[] args) throws IOException
     {
-        File file = new File("D:\\test.pdf");
-
+        //File file = new File("D:\\test.pdf");
+        //File file = new File("C:\\Users\\54286\\Desktop\\盘龙区地名志——正文.pdf");
+        //C:/Users/54286/Desktop/盘龙区地名志——正文.pdf
         try {
-            PDDocument doc = PDDocument.load(file);
-            PDDocumentInformation info = doc.getDocumentInformation();
+            //PDDocument doc = PDDocument.load(file);
+
+            /*
+            获取地名pdf中的地名及其页码信息
+             */
+            /*
+            System.out.println(doc.getNumberOfPages());
+            PDFTextStripper stripper=new PDFTextStripper();
+            stripper.setSortByPosition(true);
+            BufferedWriter bw = new BufferedWriter(new FileWriter("C:\\Users\\54286\\Desktop\\盘龙区地名志——正文.txt"));
+            for (int i = 1; i < doc.getNumberOfPages(); i++) {
+                stripper.setStartPage(i);
+                stripper.setEndPage(i);
+                String content = stripper.getText(doc);
+
+                String[] strs = content.split("\n");
+                for (int j = 0; j < strs.length; j++) {
+                    if (strs[j].indexOf("【") != -1) {
+                        bw.write(strs[j].substring(0, strs[j].indexOf("【")));
+                        bw.write(" ");
+                        bw.write(String.valueOf(i));
+                        bw.newLine();
+                    }
+                }
+            }
+            //关闭流
+            bw.close();
+            System.out.println("写入成功");
+            */
+
+            /*PDDocumentInformation info = doc.getDocumentInformation();
             List<PDAnnotation> list = doc.getPage(0).getAnnotations();
             for (int i = 0; i < list.size(); i++) {
                 System.out.println(list.get(i).getAnnotationName());
             }
+
             COSDictionary d = doc.getPage(0).getCOSObject();
             Iterator ss = d.entrySet().iterator();
             while (ss.hasNext())
             {
                 Map.Entry<COSName, COSBase> entry = (Map.Entry<COSName, COSBase>)ss.next();
                 System.out.println(entry.getKey().getName() + ", " + entry.getValue());
-            }
+            }*/
             /*Iterator<String> i = info.getMetadataKeys().iterator();
             while (i.hasNext())
             {
@@ -114,20 +148,121 @@ public class CustomGraphicsStreamEngine extends PDFGraphicsStreamEngine
             PDFTextStripper stripper = new PDFTextStripper();
             String content = stripper.getText(doc);
             System.out.println(content);*/
-        /*PDFRenderer renderer = new PDFRenderer(doc);
-        BufferedImage bufferedImage = renderer.renderImage(0);
-        ImageIO.write(bufferedImage, "png", new File("D:\\test.png"));
-        JFrame frame = new ImageViewerFrame(new File("D:\\test.png"), bufferedImage.getWidth(), bufferedImage.getHeight());
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setVisible(true);*/
+            //PDFRenderer renderer = new PDFRenderer(doc);
+            //BufferedImage bufferedImage = renderer.renderImage(0);
+
+            //要遍历的路径
+            String path = "C:\\Users\\54286\\Desktop\\临沧市地图集批量入库文件夹";
+            //要遍历的路径
+            String NewPath = "C:\\Users\\54286\\Desktop\\临沧市地图集";
+            int MapTypeCount = 0;
+            BufferedWriter bw = new BufferedWriter(new FileWriter(NewPath + "\\data.txt"));
+            //获取其file对象
+            File mfile = new File(path);
+            ParseFiles(mfile, "", bw, MapTypeCount);
+            /*
+            //遍历path下的文件和目录，放在File数组中
+            File[] fs = mfile.listFiles();
+            //遍历File[]数组
+            for(File f : fs){
+                //若非目录(即文件)，则打印
+                if (f.isDirectory()){
+                    String DirectoryName = f.toString();
+                    ParseFiles(f, DirectoryName.substring(DirectoryName.lastIndexOf("\\") + 1), bw, MapTypeCount);
+                }
+            }*/
+            bw.close();
+
+            /*ImageIO.write(bufferedImage, "png", new File("D:\\test.png"));
+            JFrame frame = new ImageViewerFrame(new File("D:\\test.png"), bufferedImage.getWidth(), bufferedImage.getHeight());
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setVisible(true);*/
         /*PDPage page = doc.getPage(0);
         CustomGraphicsStreamEngine engine = new CustomGraphicsStreamEngine(page);
         engine.run();*/
-            doc.close();
+            //doc.close();
         }
         catch (Exception e){
             System.out.println(e);
         }
+    }
+
+    private static void ParseFiles(File file, String FolderName, BufferedWriter bw, int MapTypeCount){
+        try {
+            System.out.println(FolderName);
+            String ParentNodeName = FolderName.substring(FolderName.lastIndexOf("\\") + 1);
+            int count = 1;
+            File[] fs = file.listFiles();
+            //遍历File[]数组
+            for(File f : fs) {
+                String FileName = f.toString();
+                if (!f.isDirectory() && f.toString().contains(".pdf")) {
+                    System.out.println(FileName);
+                    PDDocument doc = PDDocument.load(f);
+                    PDFRenderer renderer = new PDFRenderer(doc);
+                    BufferedImage bufferedImage = renderer.renderImageWithDPI(0, 300, ImageType.RGB);
+                    String pngName = FileName.substring(FileName.lastIndexOf(FolderName), FileName.lastIndexOf(".pdf")) + ".png";
+                    ImageIO.write(bufferedImage, "png", new File("C:\\Users\\54286\\Desktop\\临沧市地图集\\" + pngName));
+                    doc.close();
+                    String PngName = pngName.substring(pngName.lastIndexOf("\\") + 1, pngName.lastIndexOf(".png")).trim();
+                    //String MapType = GetMapType(ParentNodeName);
+                    String PngPath = "C:\\Users\\54286\\Desktop\\临沧市地图集\\" + pngName;
+                    //bw.write(ParentNodeName + "," + PngName + "," + MapType + "," + PngPath);
+                    bw.write(ParentNodeName + "," + PngName + "," + MapTypeCount + "," + PngPath);
+                    bw.newLine();
+                }
+                else{
+                    bw.write(ParentNodeName + "," + FileName.substring(FileName.lastIndexOf("\\") + 1) + "," + MapTypeCount + "," + " ");
+                    bw.newLine();
+                    String DirectoryName = f.toString();
+                    if (MapTypeCount == 0)
+                        ParseFiles(f, DirectoryName.substring(DirectoryName.lastIndexOf("\\") + 1), bw, MapTypeCount + count++);
+                    else
+                        ParseFiles(f, FolderName + DirectoryName.substring(DirectoryName.lastIndexOf("\\")), bw, MapTypeCount + count++);
+                }
+            }
+        }
+        catch (Exception e){
+            System.out.println(e.toString());
+        }
+    }
+
+    private static String GetMapType(String ParentNodeName){
+        switch (ParentNodeName){
+            case "序图组":
+                return "1";
+            case "资源与环境图组":
+                return "2";
+            case "社会经济图组":
+                return "3";
+            case "区域地理图组":
+                return "4";
+            case "县图":
+                return "5";
+            case "各县城区图":
+                return "6";
+            case "各县影像图":
+                return "7";
+            case "乡镇图":
+                return "8";
+            case "临翔区":
+                return "9";
+            case "凤庆县":
+                return "10";
+            case "云县":
+                return "11";
+            case "永德县":
+                return "12";
+            case "镇康县":
+                return "13";
+            case "双江县":
+                return "14";
+            case "耿马县":
+                return "15";
+            case "沧源县":
+                return "16";
+        }
+        return "0";
     }
 
     public static String dateFormat( Calendar calendar ) throws Exception
